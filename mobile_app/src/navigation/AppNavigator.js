@@ -14,17 +14,46 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator>
+      <Stack.Navigator
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: "#ffffff",
+          },
+          headerTintColor: "#1f2937",
+          headerTitleStyle: {
+            fontWeight: "600",
+          },
+          headerShadowVisible: true,
+        }}
+      >
         {token ? (
           <>
-            <Stack.Screen name="Chat" component={ChatScreen} options={{ title: "Chat" }} />
-            <Stack.Screen name="Wellness" component={WellnessScreen} options={{ title: "Wellness" }} />
+            <Stack.Screen
+              name="Chat"
+              component={ChatScreen}
+              options={{
+                title: "💬 Chat",
+                headerBackVisible: false,
+              }}
+            />
+            <Stack.Screen
+              name="Wellness"
+              component={WellnessScreen}
+              options={{
+                title: "🩺 Wellness Dashboard",
+              }}
+            />
           </>
         ) : (
-          <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
         )}
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
-

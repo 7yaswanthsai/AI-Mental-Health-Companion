@@ -17,6 +17,9 @@ def log_chat(
     subject_id: str | None = None,
     wellness: dict | None = None,
     recommendations: list[str] | None = None,
+    tags: list[str] | None = None,
+    tone: str | None = None,
+    escalate: bool | None = None,
 ):
     """Insert a chat log into MongoDB."""
     chat_data = {
@@ -32,6 +35,12 @@ def log_chat(
         chat_data["wellness"] = wellness
     if recommendations:
         chat_data["recommendations"] = recommendations
+    if tags:
+        chat_data["tags"] = tags
+    if tone:
+        chat_data["tone"] = tone
+    if escalate is not None:
+        chat_data["escalate"] = escalate
     chat_collection.insert_one(chat_data)
     return {"status": "success"}
 

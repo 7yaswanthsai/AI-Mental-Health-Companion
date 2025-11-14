@@ -1,0 +1,30 @@
+{
+  "num_samples": 100,
+  "macro_f1_transformer": 0.01639344262295082,
+  "macro_f1_lstm": 0.01639344262295082,
+  "macro_f1_ensemble": 0.01639344262295082,
+  "label_distribution": {
+    "sadness": 5,
+    "neutral": 22,
+    "admiration": 11,
+    "desire": 2,
+    "curiosity": 2,
+    "gratitude": 4,
+    "annoyance": 4,
+    "approval": 8,
+    "disapproval": 6,
+    "realization": 3,
+    "anger": 6,
+    "confusion": 4,
+    "amusement": 1,
+    "optimism": 6,
+    "surprise": 2,
+    "joy": 3,
+    "disappointment": 3,
+    "excitement": 2,
+    "nervousness": 2,
+    "caring": 2,
+    "remorse": 1,
+    "love": 1
+  }
+}

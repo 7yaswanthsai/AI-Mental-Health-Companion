@@ -10,4 +10,7 @@ def get_database():
 
 db = get_database()
 chat_logs_collection = db["chat_logs"]
-print("✅ MongoDB connected successfully!")
+try:
+    print("✅ MongoDB connected successfully!")
+except UnicodeEncodeError:
+    print("[OK] MongoDB connected successfully!")
