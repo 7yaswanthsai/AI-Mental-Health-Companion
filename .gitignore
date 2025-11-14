@@ -12,3 +12,29 @@ __pycache__/
 .env
 .env.*
 .ipynb_checkpoints/
+
+
+# Environment files
+.env
+.env.*
+
+data/
+datasets/
+
+# Model files
+*.h5
+*.pt
+*.pth
+*.onnx
+
+# Logs
+logs/
+*.log
+
+# Outputs
+outputs/
+runs/
+
+# Temporary files
+.DS_Store
+Thumbs.db
