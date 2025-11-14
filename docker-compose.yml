@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+    container_name: pai-mhc-api
+    ports:
+      - "8000:8000"
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/
+      MONGODB_DB: pai_mhc_db
+    depends_on:
+      - mongo
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+
+  mongo:
+    image: mongo:6.0
+    container_name: pai-mhc-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
+
+

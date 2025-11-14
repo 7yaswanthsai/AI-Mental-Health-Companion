@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "PAI-MHC Mobile",
+    "slug": "pai-mhc-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.paimhc.mobile"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "extra": {
+      "apiBaseUrl": "http://127.0.0.1:8000"
+    }
+  }
+}
+
