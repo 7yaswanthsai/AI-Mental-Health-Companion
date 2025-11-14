@@ -126,3 +126,74 @@ def generate_response(
         "escalate": False,
     }
 
+
+def generate_empathetic_reply(user_text, emotion, wellness_status):
+    """
+    Generates supportive, empathetic, conversational reply WITH follow-up questions.
+    This is a simpler, more direct version focused on follow-up questions.
+    
+    Args:
+        user_text: The user's input text
+        emotion: Detected emotion label
+        wellness_status: Wellness status from PWI
+        
+    Returns:
+        str: Empathetic response with follow-up question
+    """
+    emotion_responses = {
+        "sadness": [
+            "I'm really sorry you're feeling this way. Want to talk about what made you feel sad?",
+            "It sounds like you're going through something heavy. What happened?",
+            "I'm here for you. What do you feel triggered this sadness?",
+        ],
+        "anger": [
+            "It sounds like something frustrated you. What made you feel this way?",
+            "Your feelings are valid. Want to talk about what caused this anger?",
+            "It's okay to feel angry sometimes. What happened that upset you?",
+        ],
+        "fear": [
+            "That sounds overwhelming. Do you want to share what you're scared of?",
+            "Fear can feel heavy — what exactly is worrying you?",
+            "I'm here with you. What's making you feel afraid?",
+        ],
+        "joy": [
+            "That's wonderful to hear! What made you happy?",
+            "I'm glad you're feeling good today. Want to share what happened?",
+            "Great! What brought this positive feeling?",
+        ],
+        "stress": [
+            "Stress can be tough. What's the main thing weighing on your mind?",
+            "I'm here. What's causing the stress today?",
+            "Do you want to talk about what triggered this stress?",
+        ],
+        "neutral": [
+            "I'm here to support you. How are you feeling right now?",
+            "Tell me what's on your mind.",
+            "I'm listening. How has your day been emotionally?",
+        ],
+    }
+
+    # Normalize emotion to match our response keys
+    emotion_lower = (emotion or "").lower()
+    
+    # Map similar emotions
+    if emotion_lower in ["anxiety", "nervous", "worried", "afraid"]:
+        emotion_key = "fear"
+    elif emotion_lower in ["frustrated", "annoyed", "irritated"]:
+        emotion_key = "anger"
+    elif emotion_lower in ["happy", "excited", "grateful", "relieved"]:
+        emotion_key = "joy"
+    elif emotion_lower in ["stressed", "overwhelmed", "pressure"]:
+        emotion_key = "stress"
+    elif emotion_lower in ["sad", "down", "depressed", "upset"]:
+        emotion_key = "sadness"
+    else:
+        emotion_key = "neutral"
+
+    base_reply = random.choice(emotion_responses.get(emotion_key, emotion_responses["neutral"]))
+
+    # Add wellness-aware follow-up if stressed
+    if wellness_status and wellness_status.lower() in ["stressed", "unknown"]:
+        base_reply += " Also, your wearable data shows some stress signals. Have you been sleeping okay lately?"
+
+    return base_reply

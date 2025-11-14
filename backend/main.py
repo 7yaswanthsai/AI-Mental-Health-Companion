@@ -6,9 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import logging
 from backend.emotion_service import predict_emotions
-from backend.empathy_engine import generate_response as generate_empathy_response
+from backend.empathy_engine import generate_response as generate_empathy_response, generate_empathetic_reply
 from backend.context_memory import append_context, get_context
 from backend.safety import check_safety, crisis_message
+from backend.safety_guard import detect_crisis, EMERGENCY_RESPONSE
+from backend.relevance_checker import is_relevant
 from database.chat_logger import log_chat
 from database.fetch_chat_api import router as history_router
 from backend.utils.emotion_fallback import detect_fallback_emotion
@@ -114,6 +116,38 @@ def chat_with_emotion(
 
     text = data.text.strip()
     subject_id = data.subject_id or current_user.get("subject_id", "S10")
+    timestamp = datetime.utcnow().isoformat()
+
+    # Safety Check First - Before any other processing
+    if detect_crisis(text):
+        logger.warning(f"Crisis detected for subject {subject_id}")
+        return ChatResponse(
+            text=EMERGENCY_RESPONSE,
+            emotion="crisis",
+            probability=1.0,
+            wellness={"subject_id": subject_id, "pwi": None, "status": "Crisis Detected"},
+            recommendations=[],
+            timestamp=timestamp,
+            tags=["crisis_support", "emergency"],
+            tone="calm",
+            escalate=True,
+        )
+
+    # Relevance Check - Handle irrelevant questions politely
+    if not is_relevant(text):
+        logger.info(f"Irrelevant question detected: {text[:50]}...")
+        wellness_snapshot = compute_pwi(subject_id) or {"subject_id": subject_id, "pwi": None, "status": "No Wearable Data"}
+        return ChatResponse(
+            text="I'm here to support your mental and emotional well-being. This question seems unrelated — but I'm here to talk about what you're feeling.",
+            emotion="irrelevant",
+            probability=0.0,
+            wellness=wellness_snapshot,
+            recommendations=[],
+            timestamp=timestamp,
+            tags=["redirect"],
+            tone="gentle",
+            escalate=False,
+        )
 
     # Predict with your trained model
     labels, probabilities = predict_emotions(text, top_n=3)
@@ -157,6 +191,14 @@ def chat_with_emotion(
     history = get_context(subject_id)
     escalate, _ = check_safety(text, wellness_snapshot.get("status"), history)
 
+    # Use the new empathetic reply generator with follow-up questions
+    response_text = generate_empathetic_reply(
+        text,
+        emotion_label,
+        wellness_snapshot.get("status"),
+    )
+    
+    # Get tags and tone from the original empathy engine for consistency
     empathy_payload = generate_empathy_response(
         text=text,
         emotion=emotion_label,
@@ -164,16 +206,15 @@ def chat_with_emotion(
         pwi_snapshot=wellness_snapshot,
         history=history,
     )
-
-    response_text = empathy_payload["text"]
+    
     tags = empathy_payload.get("tags", [])
-    tone = empathy_payload.get("tone")
+    tone = empathy_payload.get("tone", "gentle")
 
+    # Additional safety check (from original safety module)
     if escalate or empathy_payload.get("escalate"):
         response_text = crisis_message()
         tags = list(dict.fromkeys(tags + ["crisis_support"]))
         tone = "calm"
-    timestamp = datetime.utcnow().isoformat()
 
     log_chat(
         text,
@@ -237,11 +278,28 @@ def emotion_analysis(
         )
 
     text = data.text.strip()
+    subject_id = data.subject_id or current_user.get("subject_id", "S10")
+    timestamp = datetime.utcnow().isoformat()
+
+    # Safety Check First
+    if detect_crisis(text):
+        logger.warning(f"Crisis detected in emotion endpoint for subject {subject_id}")
+        return ChatResponse(
+            text=EMERGENCY_RESPONSE,
+            emotion="crisis",
+            probability=1.0,
+            wellness={"subject_id": subject_id, "pwi": None, "status": "Crisis Detected"},
+            recommendations=[],
+            timestamp=timestamp,
+            tags=["crisis_support", "emergency"],
+            tone="calm",
+            escalate=True,
+        )
+
     labels, probabilities = predict_emotions(text, top_n=3)
     top_emotion = labels[0] if labels else "neutral"
     top_prob = probabilities[0] if probabilities else 0.0
 
-    subject_id = data.subject_id or current_user.get("subject_id", "S10")
     wellness_snapshot = compute_pwi(subject_id)
     if not wellness_snapshot:
         wellness_snapshot = {"subject_id": subject_id, "pwi": None, "status": "No Wearable Data"}
@@ -256,6 +314,14 @@ def emotion_analysis(
     history = get_context(subject_id)
     escalate, _ = check_safety(text, wellness_snapshot.get("status"), history)
 
+    # Use the new empathetic reply generator
+    response_text = generate_empathetic_reply(
+        text,
+        top_emotion,
+        wellness_snapshot.get("status"),
+    )
+    
+    # Get tags and tone from the original empathy engine
     empathy_payload = generate_empathy_response(
         text=text,
         emotion=top_emotion,
@@ -263,16 +329,14 @@ def emotion_analysis(
         pwi_snapshot=wellness_snapshot,
         history=history,
     )
-
-    response_text = empathy_payload["text"]
+    
     tags = empathy_payload.get("tags", [])
-    tone = empathy_payload.get("tone")
+    tone = empathy_payload.get("tone", "gentle")
 
     if escalate or empathy_payload.get("escalate"):
         response_text = crisis_message()
         tags = list(dict.fromkeys(tags + ["crisis_support"]))
         tone = "calm"
-    timestamp = datetime.utcnow().isoformat()
 
     log_chat(
         text,
