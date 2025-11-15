@@ -70,13 +70,17 @@ def compute_eda_peaks(eda_signal, threshold_percentile=75):
 
 def get_or_compute_baseline(subject_id: str, window_days: int = 7):
     """Get baseline stats for subject, or compute from historical data."""
-    baseline = wearable_baselines.find_one({"subject_id": subject_id})
-    if baseline:
-        return baseline
+    try:
+        baseline = wearable_baselines.find_one({"subject_id": subject_id}, max_time_ms=5000)
+        if baseline:
+            return baseline
 
-    # Compute baseline from existing data (if available)
-    subject_data = wearable_data.find_one({"subject_id": subject_id})
-    if not subject_data:
+        # Compute baseline from existing data (if available)
+        subject_data = wearable_data.find_one({"subject_id": subject_id}, max_time_ms=5000)
+        if not subject_data:
+            return None
+    except Exception:
+        # MongoDB connection failed
         return None
 
     # Use current data as baseline (in production, would aggregate over time window)
@@ -130,7 +134,19 @@ def compute_pwi(subject_id: str, use_smoothing: bool = True):
     Returns:
         dict with pwi, status, features, and metadata
     """
-    subject = wearable_data.find_one({"subject_id": subject_id})
+    try:
+        # Try to connect to MongoDB with a short timeout
+        subject = wearable_data.find_one({"subject_id": subject_id}, max_time_ms=5000)
+    except Exception as e:
+        # MongoDB connection failed - return gracefully
+        return {
+            "subject_id": subject_id,
+            "pwi": None,
+            "status": "No Wearable Data",
+            "features": {},
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+    
     if not subject:
         return {
             "subject_id": subject_id,
@@ -141,12 +157,22 @@ def compute_pwi(subject_id: str, use_smoothing: bool = True):
         }
 
     # Get or compute baseline
-    baseline = get_or_compute_baseline(subject_id)
-    if not baseline:
+    try:
+        baseline = get_or_compute_baseline(subject_id)
+        if not baseline:
+            return {
+                "subject_id": subject_id,
+                "pwi": None,
+                "status": "No Wearable Data",
+                "features": {},
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+    except Exception:
+        # Baseline computation failed
         return {
             "subject_id": subject_id,
             "pwi": None,
-            "status": "Unknown (No Data)",
+            "status": "No Wearable Data",
             "features": {},
             "timestamp": datetime.utcnow().isoformat(),
         }

@@ -1,87 +1,219 @@
-from __future__ import annotations
-
-import json
-import os
+"""
+Empathy Engine - Generates supportive, empathetic responses for mental health companion.
+Implements exact behavioral rules as specified.
+"""
 import random
-from typing import Dict, List, Optional
-
-PERSONALITY_PATH = os.path.join(os.path.dirname(__file__), "personality.json")
-
-try:
-    with open(PERSONALITY_PATH, "r", encoding="utf-8") as f:
-        PERSONALITY = json.load(f)
-except FileNotFoundError:  # pragma: no cover
-    PERSONALITY = {
-        "name": "Companion",
-        "tone": {"default": "gentle"},
-        "signoffs": ["I'm here with you."],
-        "reminders": [],
-    }
+from typing import Optional
 
 
-TEMPLATES: Dict[str, List[str]] = {
-    "joy": [
-        "That's wonderful to hear! I love how you notice the bright spots. What made that moment feel so special?",
-        "Your joy really shines through. Tell me more so we can celebrate it together.",
-    ],
-    "sadness": [
-        "I'm really sorry you're carrying this weight. It's completely okay to feel what you're feeling.",
-        "Thank you for trusting me with this. We can take it slow and sit with the sadness together.",
-    ],
-    "anger": [
-        "It's understandable to feel upset after something so frustrating. Your emotions are valid.",
-        "That sounds really tough, and anyone would feel agitated in that situation.",
-    ],
-    "fear": [
-        "Feeling anxious can be exhausting. Let's take a calming breath while we talk it through.",
-        "You're not alone in this worry. We can break it down step by step together.",
-    ],
-    "surprise": [
-        "That sounds unexpected! How are you holding up with it all?",
-        "It can take a minute to process something surprising. I'm here while you do.",
-    ],
-    "neutral": [
-        "I'm listening. Whatever you're feeling matters here.",
-        "Thanks for checking in—what would feel helpful to talk about right now?",
-    ],
+# -----------------------------------
+# EXACT BEHAVIORAL RULES
+# -----------------------------------
+
+# 1. GREETINGS
+GREETING_KEYWORDS = [
+    "hi", "hello", "hey", "gm", "ga", "good morning", "good afternoon", 
+    "good evening", "how are you", "what's up", "sup"
+]
+
+GREETING_RESPONSE = "Hi, it's good to hear from you. How are you feeling today?"
+
+
+# 2. NEUTRAL
+NEUTRAL_RESPONSES = [
+    "Thanks for sharing. Sometimes being neutral can hide deeper feelings. How has your day been so far?",
+    "I'm here to listen. Even neutral feelings can tell us something. How has your day been so far?",
+]
+
+
+# 3. JOYFUL
+JOY_RESPONSES = [
+    "That's wonderful to hear! What's making you feel happy today?",
+    "I'm so glad you're feeling good! What's making you feel happy today?",
+]
+
+
+# 4. SADNESS
+SADNESS_RESPONSES = [
+    "I'm really sorry you're going through this. Do you want to talk about what made you feel this way?",
+    "That sounds really difficult. I'm here for you. Do you want to talk about what made you feel this way?",
+]
+
+
+# 5. STRESS / ANXIETY
+STRESS_RESPONSES = [
+    "That sounds overwhelming. What's causing the most stress right now?",
+    "I hear you. Stress can be really tough. What's causing the most stress right now?",
+]
+
+
+# 6. ANGER
+ANGER_RESPONSES = [
+    "I'm sorry something upset you. What happened?",
+    "That must have been frustrating. I'm here to listen. What happened?",
+]
+
+
+# 7. FEAR
+FEAR_RESPONSES = [
+    "I hear you. What's making you feel afraid?",
+    "That sounds scary. I'm here with you. What's making you feel afraid?",
+]
+
+
+# 8. IRRELEVANT QUESTIONS
+IRRELEVANT_RESPONSE = (
+    "I can only support conversations about your emotions or well-being. "
+    "Tell me how you're feeling — I'm here for you."
+)
+
+
+# 9. HEALTH QUERIES
+HEALTH_KEYWORDS = {
+    "chest pain": "Thanks for sharing this — your health matters. Can you describe the symptoms a bit more? If it becomes severe, please contact medical support immediately.",
+    "dizziness": "Thanks for sharing this — your health matters. Can you describe the symptoms a bit more? If it becomes severe, please contact medical support immediately.",
+    "headache": "Thanks for sharing this — your health matters. Can you describe the symptoms a bit more? If it becomes severe, please contact medical support immediately.",
+    "heart racing": "Thanks for sharing this — your health matters. Can you describe the symptoms a bit more? If it becomes severe, please contact medical support immediately.",
+    "nausea": "Thanks for sharing this — your health matters. Can you describe the symptoms a bit more? If it becomes severe, please contact medical support immediately.",
 }
 
-ACTION_TAGS = {
-    "sadness": ["journaling", "breathing", "reaching_out"],
-    "anger": ["grounding", "breathing"],
-    "fear": ["guided_meditation", "reassurance"],
-    "surprise": ["reflection"],
-    "joy": ["celebration", "gratitude"],
-    "neutral": ["check_in"],
+
+# 10. FOLLOW-UP QUESTIONS (to be appended to responses)
+FOLLOW_UP_QUESTIONS = [
+    "What do you feel triggered this?",
+    "Do you want to share more about it?",
+    "How has this been affecting you?",
+    "What happened next?",
+    "Can you tell me more?",
+    "How are you feeling about that now?",
+]
+
+
+# -----------------------------------
+# EMOTION MAPPING
+# -----------------------------------
+EMOTION_MAP = {
+    # Sadness variants
+    "sad": "sadness",
+    "sadness": "sadness",
+    "upset": "sadness",
+    "depressed": "sadness",
+    "down": "sadness",
+    "low": "sadness",
+    "grief": "sadness",
+    "sorrow": "sadness",
+    
+    # Anger variants
+    "anger": "anger",
+    "angry": "anger",
+    "annoyed": "anger",
+    "irritated": "anger",
+    "mad": "anger",
+    "frustrated": "anger",
+    "frustration": "anger",
+    
+    # Fear/Anxiety variants
+    "fear": "fear",
+    "anxiety": "fear",
+    "anxious": "fear",
+    "scared": "fear",
+    "afraid": "fear",
+    "nervous": "fear",
+    "worried": "fear",
+    "panic": "fear",
+    
+    # Stress variants
+    "stress": "stress",
+    "stressed": "stress",
+    "overwhelmed": "stress",
+    "pressure": "stress",
+    "tension": "stress",
+    
+    # Joy variants
+    "joy": "joy",
+    "happy": "joy",
+    "happiness": "joy",
+    "excited": "joy",
+    "grateful": "joy",
+    "relieved": "joy",
+    "content": "joy",
+    
+    # Neutral
+    "neutral": "neutral",
+    "calm": "neutral",
 }
 
 
-def _pick_template(emotion: str) -> str:
-    pool = TEMPLATES.get(emotion, TEMPLATES["neutral"])
-    return random.choice(pool)
+def normalize_emotion(emotion: str) -> str:
+    """
+    Normalize emotion label to one of: sadness, anger, fear, stress, joy, neutral.
+    """
+    if not emotion:
+        return "neutral"
+    
+    emotion_lower = emotion.lower().strip()
+    return EMOTION_MAP.get(emotion_lower, "neutral")
 
 
-def _describe_context(history: List[dict]) -> Optional[str]:
-    if not history:
-        return None
-    last = history[-1]
-    prev_emotion = last.get("metadata", {}).get("emotion")
-    if prev_emotion:
-        return f"I remember earlier you mentioned feeling {prev_emotion}. "
-    return None
-
-
-def _pwi_advice(pwi_snapshot: dict | None) -> Optional[str]:
-    if not pwi_snapshot:
-        return None
-    status = (pwi_snapshot.get("status") or "").lower()
-    if "stressed" in status:
-        return "Let’s try a grounding exercise—placing a hand on your chest and feeling each inhale and exhale."
-    if "calm" in status:
-        return "It’s great to notice this steadiness. Maybe note what’s supporting it so you can revisit it later."
-    if "unknown" in status:
-        return "If you’re able, syncing your wearable later might give us clearer wellness signals."
-    return None
+def generate_empathetic_reply(
+    user_text: str,
+    emotion: str,
+    wellness_status: Optional[str] = None
+) -> str:
+    """
+    Generate empathetic response based on user text and detected emotion.
+    
+    Args:
+        user_text: User's input message
+        emotion: Detected emotion label
+        wellness_status: Wellness status (NOT used in chat response, only for internal logic)
+        
+    Returns:
+        str: Empathetic response text
+    """
+    if not user_text:
+        return "I'm here to listen. How are you feeling?"
+    
+    text_lower = user_text.lower().strip()
+    
+    # 1. GREETING DETECTION
+    if any(greet in text_lower for greet in GREETING_KEYWORDS):
+        return GREETING_RESPONSE
+    
+    # 2. HEALTH QUERIES
+    for symptom, response in HEALTH_KEYWORDS.items():
+        if symptom in text_lower:
+            return response
+    
+    # 3. Normalize emotion
+    emotion_key = normalize_emotion(emotion)
+    
+    # 4. Generate emotion-specific response
+    base_response = None
+    
+    if emotion_key == "neutral":
+        base_response = random.choice(NEUTRAL_RESPONSES)
+    elif emotion_key == "joy":
+        base_response = random.choice(JOY_RESPONSES)
+    elif emotion_key == "sadness":
+        base_response = random.choice(SADNESS_RESPONSES)
+    elif emotion_key == "stress":
+        base_response = random.choice(STRESS_RESPONSES)
+    elif emotion_key == "anger":
+        base_response = random.choice(ANGER_RESPONSES)
+    elif emotion_key == "fear":
+        base_response = random.choice(FEAR_RESPONSES)
+    else:
+        # Fallback to neutral
+        base_response = random.choice(NEUTRAL_RESPONSES)
+    
+    # 5. Add follow-up question if not already present
+    # (Some responses already have questions, but we ensure one is always there)
+    if "?" not in base_response:
+        follow_up = random.choice(FOLLOW_UP_QUESTIONS)
+        base_response = f"{base_response} {follow_up}"
+    
+    return base_response
 
 
 def generate_response(
@@ -89,111 +221,36 @@ def generate_response(
     emotion: str,
     probability: float,
     pwi_snapshot: Optional[dict],
-    history: List[dict],
+    history: list,
     tone_hint: Optional[str] = None,
 ) -> dict:
-    emotion_key = emotion if emotion in TEMPLATES else "neutral"
-    base = _pick_template(emotion_key)
-    personalization = _describe_context(history) or ""
-
-    encouragement = PERSONALITY["reminders"]
-    reminder_line = random.choice(encouragement) if encouragement else ""
-
-    pwi_line = _pwi_advice(pwi_snapshot) or ""
-
-    sentences = [personalization + base]
-    if emotion_key in {"sadness", "fear", "anger"}:
-        sentences.append("You deserve kindness from yourself right now; let's slow down together.")
-    if pwi_line:
-        sentences.append(pwi_line)
-    if reminder_line:
-        sentences.append(reminder_line)
-
-    final_text = " ".join(sentence.strip() for sentence in sentences if sentence.strip())
-
-    tone = tone_hint or PERSONALITY["tone"].get("default", "gentle")
-    if pwi_snapshot and (pwi_snapshot.get("status") or "").lower().startswith("stress"):
-        tone = PERSONALITY["tone"].get("stressed", tone)
-
-    tags = ACTION_TAGS.get(emotion_key, ["check_in"])
-    if pwi_snapshot and (pwi_snapshot.get("status") or "").lower() in {"stressed", "high stress"}:
-        tags = list(dict.fromkeys(tags + ["grounding", "breathing"]))
-
+    """
+    Advanced response generator (used internally for metadata).
+    
+    Args:
+        text: User input
+        emotion: Detected emotion
+        probability: Emotion confidence
+        pwi_snapshot: Wellness data (internal only, not shown in chat)
+        history: Conversation history
+        tone_hint: Optional tone override
+        
+    Returns:
+        dict: Response with text, tags, tone, escalate flag
+    """
+    wellness_status = pwi_snapshot.get("status") if pwi_snapshot else None
+    
+    # Generate empathetic reply (wellness_status used internally, not in response text)
+    reply_text = generate_empathetic_reply(text, emotion, wellness_status)
+    
+    # Determine tags and tone
+    emotion_key = normalize_emotion(emotion)
+    tags = ["empathetic", emotion_key]
+    tone = tone_hint or "gentle"
+    
     return {
-        "text": final_text,
+        "text": reply_text,
         "tags": tags,
         "tone": tone,
         "escalate": False,
     }
-
-
-def generate_empathetic_reply(user_text, emotion, wellness_status):
-    """
-    Generates supportive, empathetic, conversational reply WITH follow-up questions.
-    This is a simpler, more direct version focused on follow-up questions.
-    
-    Args:
-        user_text: The user's input text
-        emotion: Detected emotion label
-        wellness_status: Wellness status from PWI
-        
-    Returns:
-        str: Empathetic response with follow-up question
-    """
-    emotion_responses = {
-        "sadness": [
-            "I'm really sorry you're feeling this way. Want to talk about what made you feel sad?",
-            "It sounds like you're going through something heavy. What happened?",
-            "I'm here for you. What do you feel triggered this sadness?",
-        ],
-        "anger": [
-            "It sounds like something frustrated you. What made you feel this way?",
-            "Your feelings are valid. Want to talk about what caused this anger?",
-            "It's okay to feel angry sometimes. What happened that upset you?",
-        ],
-        "fear": [
-            "That sounds overwhelming. Do you want to share what you're scared of?",
-            "Fear can feel heavy — what exactly is worrying you?",
-            "I'm here with you. What's making you feel afraid?",
-        ],
-        "joy": [
-            "That's wonderful to hear! What made you happy?",
-            "I'm glad you're feeling good today. Want to share what happened?",
-            "Great! What brought this positive feeling?",
-        ],
-        "stress": [
-            "Stress can be tough. What's the main thing weighing on your mind?",
-            "I'm here. What's causing the stress today?",
-            "Do you want to talk about what triggered this stress?",
-        ],
-        "neutral": [
-            "I'm here to support you. How are you feeling right now?",
-            "Tell me what's on your mind.",
-            "I'm listening. How has your day been emotionally?",
-        ],
-    }
-
-    # Normalize emotion to match our response keys
-    emotion_lower = (emotion or "").lower()
-    
-    # Map similar emotions
-    if emotion_lower in ["anxiety", "nervous", "worried", "afraid"]:
-        emotion_key = "fear"
-    elif emotion_lower in ["frustrated", "annoyed", "irritated"]:
-        emotion_key = "anger"
-    elif emotion_lower in ["happy", "excited", "grateful", "relieved"]:
-        emotion_key = "joy"
-    elif emotion_lower in ["stressed", "overwhelmed", "pressure"]:
-        emotion_key = "stress"
-    elif emotion_lower in ["sad", "down", "depressed", "upset"]:
-        emotion_key = "sadness"
-    else:
-        emotion_key = "neutral"
-
-    base_reply = random.choice(emotion_responses.get(emotion_key, emotion_responses["neutral"]))
-
-    # Add wellness-aware follow-up if stressed
-    if wellness_status and wellness_status.lower() in ["stressed", "unknown"]:
-        base_reply += " Also, your wearable data shows some stress signals. Have you been sleeping okay lately?"
-
-    return base_reply

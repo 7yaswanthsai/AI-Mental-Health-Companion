@@ -32,8 +32,9 @@ def append_context(subject_id: str, user_msg: str, bot_msg: str, metadata: Optio
 
     if _context_collection is not None:
         try:
-            _context_collection.insert_one(record)
+            _context_collection.insert_one(record, max_time_ms=2000)
         except Exception:  # pragma: no cover
+            # MongoDB unavailable - continue with in-memory cache only
             pass
 
 
@@ -43,7 +44,7 @@ def get_context(subject_id: str, limit: int = 5) -> List[dict]:
     if not history and _context_collection is not None:
         try:
             cursor = (
-                _context_collection.find({"subject_id": subject_id})
+                _context_collection.find({"subject_id": subject_id}, max_time_ms=2000)
                 .sort("timestamp", -1)
                 .limit(limit)
             )
@@ -52,6 +53,7 @@ def get_context(subject_id: str, limit: int = 5) -> List[dict]:
                 item.pop("_id", None)
             _memory_cache[subject_id] = deque(history, maxlen=limit)
         except Exception:  # pragma: no cover
+            # MongoDB unavailable - use in-memory cache only
             history = list(_memory_cache.get(subject_id, []))
 
     return history[-limit:]

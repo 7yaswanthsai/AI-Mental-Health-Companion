@@ -1,60 +1,49 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Heart, Lock, User } from 'lucide-react';
+import { Heart, Lock, User, Mail } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import GlassCard from '@/components/GlassCard';
 import GradientButton from '@/components/GradientButton';
-import { useStore } from '@/lib/store';
 import { authApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
-const Login = () => {
-  const [email, setEmail] = useState('test@pai.com');
-  const [password, setPassword] = useState('123456');
+const Signup = () => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-  const { setUser } = useStore();
   const { toast } = useToast();
 
-  // Check for registration success message
-  useEffect(() => {
-    if (location.state?.message) {
-      toast({
-        title: 'Success!',
-        description: location.state.message,
-      });
-      // Pre-fill email if provided
-      if (location.state.email) {
-        setEmail(location.state.email);
-      }
-      // Clear state
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state, toast]);
-
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const response = await authApi.login(email, password);
-      localStorage.setItem('pai-mhc-token', response.access_token);
-      // Default subject ID - can be changed later
-      setUser(email, response.access_token, 'S10');
+      const response = await authApi.register({
+        name,
+        email,
+        password,
+      });
       
       toast({
-        title: 'Welcome back!',
-        description: 'Successfully logged in to PAI-MHC',
+        title: 'Registration successful!',
+        description: `Your account has been created. Subject ID: ${response.subject_id}`,
       });
 
-      navigate('/chat');
+      // Navigate to login screen after successful registration
+      navigate('/login', { 
+        state: { 
+          message: 'Registration successful! Please login with your credentials.',
+          email: email 
+        } 
+      });
     } catch (error: any) {
       toast({
-        title: 'Login failed',
-        description: error.response?.data?.detail || 'Invalid credentials',
+        title: 'Registration failed',
+        description: error.response?.data?.detail || 'Failed to create account. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -103,15 +92,31 @@ const Login = () => {
           >
             <Heart className="w-16 h-16 text-primary breathing" />
           </motion.div>
-          <h1 className="text-4xl font-bold mb-2 gradient-text">Welcome Back</h1>
-          <p className="text-muted-foreground">Sign in to continue your journey</p>
+          <h1 className="text-4xl font-bold mb-2 gradient-text">Create Account</h1>
+          <p className="text-muted-foreground">Join us on your wellness journey</p>
         </div>
 
         <GlassCard hover={false} className="p-8">
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleSignup} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                Full Name
+              </Label>
+              <Input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your full name"
+                required
+                className="glass border-white/20"
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="email" className="flex items-center gap-2">
-                <User className="w-4 h-4" />
+                <Mail className="w-4 h-4" />
                 Email
               </Label>
               <Input
@@ -137,6 +142,7 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 required
+                minLength={6}
                 className="glass border-white/20"
               />
             </div>
@@ -144,23 +150,21 @@ const Login = () => {
             <GradientButton
               type="submit"
               className="w-full"
+              disabled={loading}
             >
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'Creating account...' : 'Sign Up'}
             </GradientButton>
           </form>
 
-          <div className="mt-6 text-center space-y-2">
+          <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              Don't have an account?{' '}
+              Already have an account?{' '}
               <Link 
-                to="/signup" 
+                to="/login" 
                 className="text-primary hover:underline font-medium"
               >
-                Sign up here
+                Sign in here
               </Link>
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Demo credentials: test@pai.com / 123456
             </p>
           </div>
         </GlassCard>
@@ -169,4 +173,5 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Signup;
+

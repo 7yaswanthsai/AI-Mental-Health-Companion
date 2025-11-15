@@ -79,12 +79,29 @@ export interface WellnessResponse {
   features?: Record<string, number>;
 }
 
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+  subject_id?: string;
+}
+
+export interface RegisterResponse {
+  message: string;
+  subject_id: string;
+}
+
 export const authApi = {
   login: async (email: string, password: string): Promise<LoginResponse> => {
     const response = await api.post<LoginResponse>('/login', {
       email,
       password,
     });
+    return response.data;
+  },
+
+  register: async (data: RegisterRequest): Promise<RegisterResponse> => {
+    const response = await api.post<RegisterResponse>('/register', data);
     return response.data;
   },
 };

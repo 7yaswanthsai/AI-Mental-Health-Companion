@@ -21,28 +21,32 @@ def log_chat(
     tone: str | None = None,
     escalate: bool | None = None,
 ):
-    """Insert a chat log into MongoDB."""
-    chat_data = {
-        "timestamp": datetime.utcnow(),
-        "user_input": user_input,
-        "predicted_emotion": emotion,
-        "probability": probability,
-        "bot_response": response,
-    }
-    if subject_id:
-        chat_data["subject_id"] = subject_id
-    if wellness:
-        chat_data["wellness"] = wellness
-    if recommendations:
-        chat_data["recommendations"] = recommendations
-    if tags:
-        chat_data["tags"] = tags
-    if tone:
-        chat_data["tone"] = tone
-    if escalate is not None:
-        chat_data["escalate"] = escalate
-    chat_collection.insert_one(chat_data)
-    return {"status": "success"}
+    """Insert a chat log into MongoDB. Fails gracefully if MongoDB is unavailable."""
+    try:
+        chat_data = {
+            "timestamp": datetime.utcnow(),
+            "user_input": user_input,
+            "predicted_emotion": emotion,
+            "probability": probability,
+            "bot_response": response,
+        }
+        if subject_id:
+            chat_data["subject_id"] = subject_id
+        if wellness:
+            chat_data["wellness"] = wellness
+        if recommendations:
+            chat_data["recommendations"] = recommendations
+        if tags:
+            chat_data["tags"] = tags
+        if tone:
+            chat_data["tone"] = tone
+        if escalate is not None:
+            chat_data["escalate"] = escalate
+        chat_collection.insert_one(chat_data)
+        return {"status": "success"}
+    except Exception:
+        # MongoDB unavailable - log silently, don't break the request
+        return {"status": "skipped", "reason": "mongodb_unavailable"}
 
 def get_all_chats(limit: int = 10):
     """Retrieve recent chat logs."""
