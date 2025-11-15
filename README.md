@@ -116,7 +116,7 @@ PAI-MHC (Personalized AI Mental Health Companion) is a comprehensive mental heal
 ## 📁 Project Structure
 
 ```
-Semester7Capstone/
+PAI-MHC/
 ├── backend/                    # FastAPI backend application
 │   ├── main.py                # Main FastAPI app and routes
 │   ├── auth.py                # JWT authentication & user management
@@ -195,7 +195,7 @@ Semester7Capstone/
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd Semester7Capstone
+   cd PAI-MHC
    ```
 
 2. **Create a virtual environment**
