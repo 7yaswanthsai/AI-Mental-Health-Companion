@@ -41,9 +41,13 @@ logger = logging.getLogger(__name__)
 async def log_requests(request: Request, call_next):
     logger.info(f"Incoming request: {request.method} {request.url}")
     logger.info(f"Headers: {dict(request.headers)}")
-    response = await call_next(request)
-    logger.info(f"Response status: {response.status_code}")
-    return response
+    try:
+        response = await call_next(request)
+        logger.info(f"Response status: {response.status_code}")
+        return response
+    except Exception as e:
+        logger.error(f"Error processing request: {str(e)}", exc_info=True)
+        raise
 
 # Configure CORS to allow mobile app requests
 app.add_middleware(
@@ -149,14 +153,24 @@ def chat_with_emotion(
             escalate=False,
         )
 
-    # Predict with your trained model
-    labels, probabilities = predict_emotions(text, top_n=3)
+    # Predict with your trained model (with timeout protection)
+    try:
+        logger.info(f"Predicting emotion for text: {text[:50]}...")
+        labels, probabilities = predict_emotions(text, top_n=3)
+        logger.info(f"Emotion prediction result: {labels[0] if labels else 'none'} ({probabilities[0] if probabilities else 0.0:.3f})")
+    except Exception as e:
+        logger.error(f"Emotion prediction failed: {e}", exc_info=True)
+        # Use fallback immediately if prediction fails
+        fallback_emotion, sentiment = detect_fallback_emotion(text)
+        labels = [fallback_emotion]
+        probabilities = [abs(sentiment)]
 
     emotion_label = labels[0] if labels else "neutral"
     emotion_prob = probabilities[0] if probabilities else 0.0
 
     # Apply fallback if probability is too low or model returns generic output
     if emotion_prob < 0.2 or emotion_label in ["neutral", "curiosity", "approval"]:
+        logger.info(f"Using fallback emotion detection (low confidence: {emotion_prob:.3f})")
         fallback_emotion, sentiment = detect_fallback_emotion(text)
         emotion_label = fallback_emotion
         emotion_prob = abs(sentiment)

@@ -1,0 +1,197 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* PAI-MHC Mental Health Companion Design System */
+
+@layer base {
+  :root {
+    /* Calming color palette */
+    --background: 220 20% 97%;
+    --foreground: 220 15% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 20%;
+
+    /* Primary Colors - Teal */
+    --primary: 174 72% 56%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 174 72% 70%;
+
+    /* Secondary - Blue */
+    --secondary: 217 91% 60%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Accent - Purple */
+    --accent: 263 70% 70%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Indigo */
+    --indigo: 239 84% 67%;
+    --indigo-foreground: 0 0% 100%;
+
+    /* Soft pink */
+    --pink: 330 81% 80%;
+    --pink-foreground: 330 30% 20%;
+
+    /* Emotion Colors */
+    --calm: 174 72% 56%;
+    --stressed: 0 84% 60%;
+    --sad: 221 83% 69%;
+    --happy: 45 97% 59%;
+    --neutral: 263 70% 70%;
+
+    /* Grayscale */
+    --dark-gray: 217 19% 15%;
+    --mid-gray: 220 9% 35%;
+    --light-gray: 218 11% 65%;
+    --extra-light: 220 13% 91%;
+
+    /* Muted backgrounds */
+    --muted: 220 20% 94%;
+    --muted-foreground: 220 15% 40%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 174 72% 56%;
+
+    /* Spacing Tokens */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 0.75rem;
+    --spacing-lg: 1rem;
+    --spacing-xl: 1.5rem;
+    --spacing-2xl: 2rem;
+    --spacing-3xl: 3rem;
+
+    /* Radius Tokens */
+    --radius: 0.75rem;
+    --radius-bubble: 1.5rem;
+    --radius-card: 1rem;
+    --radius-button: 0.75rem;
+    --radius-input: 0.625rem;
+
+    /* Glass effects */
+    --glass-bg: 0 0% 100% / 0.1;
+    --glass-border: 0 0% 100% / 0.2;
+    --glass-shadow: 0 0% 0% / 0.1;
+
+    /* Gradients */
+    --gradient-calm: linear-gradient(135deg, hsl(174, 72%, 56%), hsl(217, 91%, 60%), hsl(263, 70%, 70%));
+    --gradient-hero: linear-gradient(180deg, hsl(174, 72%, 96%), hsl(217, 91%, 96%), hsl(263, 70%, 96%));
+    --gradient-card: linear-gradient(135deg, hsl(174, 72%, 98%), hsl(217, 91%, 98%));
+    
+    /* Shadows */
+    --shadow-sm: 0 2px 8px hsl(220, 20%, 80% / 0.2);
+    --shadow-md: 0 4px 16px hsl(220, 20%, 80% / 0.3);
+    --shadow-lg: 0 8px 32px hsl(220, 20%, 80% / 0.4);
+    --shadow-glow: 0 0 40px hsl(174, 72%, 56% / 0.3);
+    --shadow-glow-purple: 0 0 40px hsl(263, 70%, 70% / 0.3);
+
+    /* Animations */
+    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-gradient-to-br from-[hsl(174,72%,96%)] via-[hsl(217,91%,96%)] to-[hsl(258,90%,96%)] text-foreground antialiased;
+    min-height: 100vh;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Glass morphism effect */
+  .glass {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20;
+  }
+
+  .glass-strong {
+    @apply bg-white/20 backdrop-blur-2xl border border-white/30;
+  }
+
+  /* Breathing animation */
+  .breathing {
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 0.8;
+    }
+  }
+
+  /* Floating animation */
+  .floating {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  /* Glow effect */
+  .glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .glow-purple {
+    box-shadow: var(--shadow-glow-purple);
+  }
+
+  /* Pulse animation */
+  .pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent;
+  }
+
+  /* Hover scale */
+  .hover-scale {
+    @apply transition-transform duration-300 hover:scale-105;
+  }
+
+  /* Hover glow */
+  .hover-glow {
+    @apply transition-shadow duration-300 hover:shadow-[0_0_40px_hsl(174,72%,56%/0.4)];
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
