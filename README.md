@@ -1,6 +1,7 @@
 # PAI-MHC: Personalized AI Mental Health Companion
 
 <div align="center">
+<img width="318" height="311" alt="PIAlogo" src="https://github.com/user-attachments/assets/9fe0b219-231f-42a4-9b63-7d2ecd1f7313" />
 
 
 ![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
